@@ -49,9 +49,26 @@ int shm_open(int id, char **pointer) {
 	}
 
 
+	//implementing case2: segment doesn't exist
+	for (int i = 0; i < 64; i++) {
+		if (shm_table.shm_pages[i].id == 0) {
+			shm_table.shm_pages[i].id = id; 
+			shm_table.shm_pages[i].frame = (char *)kmalloc(); 
+			if (shm_table.shm_pages[i].frame == 0) {
+				release(&shm_table.lock); 
+				return -1; //kmalloc has failed
+			}
+			shm_table.shm_pages[i].refcnt = 1;
+			mappages(pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U);
+			*pointer = (char *)va;
+			curproc->sz = va + PGSIZE;
+			release(&shm_table.lock);
+			return 0;
+		}
+	}
 
-
-return 0; //added to remove compiler warning -- you should decide what to return
+	release(&shm_table.lock);
+	return -1; //no available entries in shm_table
 }
 
 
