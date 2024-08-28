@@ -33,7 +33,7 @@ int shm_open(int id, char **pointer) {
 
 	struct proc *curproc = myproc();
 	pde_t *pgdir = curproc->pgdir;
-	unit va = PGROUNDUP(curproc->sz) //essentially gets the next available page-aligned address
+	uint va = PGROUNDUP(curproc->sz); //essentially gets the next available page-aligned address
 	
 	//find shared memory segment in the shm_table
 	for (int i = 0; i < 64; i++) {
@@ -53,7 +53,7 @@ int shm_open(int id, char **pointer) {
 	for (int i = 0; i < 64; i++) {
 		if (shm_table.shm_pages[i].id == 0) {
 			shm_table.shm_pages[i].id = id; 
-			shm_table.shm_pages[i].frame = (char *)kmalloc(); 
+			shm_table.shm_pages[i].frame = (char *)kalloc(); 
 			if (shm_table.shm_pages[i].frame == 0) {
 				release(&shm_table.lock); 
 				return -1; //kmalloc has failed
