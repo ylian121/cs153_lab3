@@ -57,7 +57,6 @@ int shm_open(int id, char **pointer) {
 	acquire(&shm_table.lock);
 
 	struct proc *curproc = myproc();
-	pde_t *pgdir = curproc->pgdir;
 	uint va = PGROUNDUP(curproc->sz); //essentially gets the next available page-aligned address
 	
 	//find shared memory segment in the shm_table
@@ -65,7 +64,10 @@ int shm_open(int id, char **pointer) {
 		if (shm_table.shm_pages[i].id == id) {
 			//implementing Case1: segment exists
 			shm_table.shm_pages[i].refcnt++;
-			mappages(curproc->pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U); 
+			if (mappages(curproc->pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U) < 0) {
+			       release(&shm_table.lock);
+		       	       return -1;
+			}	       
 			*pointer = (char *)va;
 			curproc->sz = va + PGSIZE;
 			release(&shm_table.lock);
@@ -83,8 +85,12 @@ int shm_open(int id, char **pointer) {
 				release(&shm_table.lock); 
 				return -1; //kmalloc has failed
 			}
+			memset(shm_table.shm_pages[i].frame, 0, PGSIZE);
 			shm_table.shm_pages[i].refcnt = 1;
-			mappages(curproc->pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U);
+			if (mappages(curproc->pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U) < 0) {
+				release(&shm_table.lock);
+				return -1;
+			}
 			*pointer = (char *)va;
 			curproc->sz = va + PGSIZE;
 			release(&shm_table.lock);
