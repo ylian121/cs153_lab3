@@ -1,10 +1,11 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "uspinlock.h"
 
 
 struct shm_cnt {
-	struct unspinlock lock;
+	struct uspinlock lock;
 	int cnt;
 }; 
 
