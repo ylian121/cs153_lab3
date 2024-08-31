@@ -65,7 +65,7 @@ int shm_open(int id, char **pointer) {
 		if (shm_table.shm_pages[i].id == id) {
 			//implementing Case1: segment exists
 			shm_table.shm_pages[i].refcnt++;
-			mappages(pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U); 
+			mappages(curproc->pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U); 
 			*pointer = (char *)va;
 			curproc->sz = va + PGSIZE;
 			release(&shm_table.lock);
@@ -84,7 +84,7 @@ int shm_open(int id, char **pointer) {
 				return -1; //kmalloc has failed
 			}
 			shm_table.shm_pages[i].refcnt = 1;
-			mappages(pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U);
+			mappages(curproc->pgdir, (void *)va, PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W | PTE_U);
 			*pointer = (char *)va;
 			curproc->sz = va + PGSIZE;
 			release(&shm_table.lock);
